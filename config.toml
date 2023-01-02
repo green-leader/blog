@@ -1,4 +1,4 @@
-baseurl = "https://green-leader.github.io/blog"
+baseurl = "https://blog.sions.org"
 languageCode = "en-us"
 theme = "terminal"
 paginate = 5
