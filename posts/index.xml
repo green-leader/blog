@@ -1,1 +1,99 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Blog</title><link>https://blog.sions.org/posts/</link><description>Recent content in Posts on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 07 Jan 2023 05:33:12 +0000</lastBuildDate><atom:link href="https://blog.sions.org/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>An Entry</title><link>https://blog.sions.org/posts/an-entry/</link><pubDate>Sat, 07 Jan 2023 05:33:12 +0000</pubDate><guid>https://blog.sions.org/posts/an-entry/</guid><description>My first post. Well my first actual post was supposed to be a log/ tutorial/ step by step/ whatever of setting up Jekyll and Backblaze and cloudflare. Well that was several days ago. Now I&amp;rsquo;m typing this, a quick draft within Google Keep. Turn it into Markdown tomorrow. Post it day after. But largely I&amp;rsquo;ve been dragging my feet, what&amp;rsquo;s the goal of this blog? Is there one? Does there need to be one?</description><content>&lt;p>My first post. Well my first &lt;em>actual&lt;/em> post was supposed to be a log/ tutorial/ step by step/ whatever of setting up Jekyll and Backblaze and cloudflare. Well that was several days ago. Now I&amp;rsquo;m typing this, a quick draft within Google Keep. Turn it into Markdown tomorrow. Post it day after. But largely I&amp;rsquo;ve been dragging my feet, what&amp;rsquo;s the goal of this blog? Is there one? Does there need to be one?&lt;/p></content></item><item><title>Hello World</title><link>https://blog.sions.org/posts/hello-world/</link><pubDate>Sun, 01 Jan 2023 17:56:42 +0000</pubDate><guid>https://blog.sions.org/posts/hello-world/</guid><description>hello world!</description><content>&lt;p>hello world!&lt;/p></content></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Blog</title><link>https://blog.sions.org/posts/</link><description>Recent content in Posts on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 20 Feb 2023 03:24:33 +0000</lastBuildDate><atom:link href="https://blog.sions.org/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Splunk Setup</title><link>https://blog.sions.org/posts/splunk-setup/</link><pubDate>Mon, 20 Feb 2023 03:24:33 +0000</pubDate><guid>https://blog.sions.org/posts/splunk-setup/</guid><description>I set up a splunk docker container recently and there were a couple what feel like oddities catching me up.
+Default debian doesn&amp;rsquo;t have world readable log files. This is not for production. But it&amp;rsquo;s okay for my homelab. Starting with this basic docker-compose file we made sure it worked.
+version: &amp;#34;3.6&amp;#34; services: so1: image: ${SPLUNK_IMAGE:-splunk/splunk:latest} container_name: so1 environment: - SPLUNK_START_ARGS=--accept-license - SPLUNK_PASSWORD ports: - 8000:8000 It&amp;rsquo;s simple, gets everything running without doing anything fancy.</description><content>&lt;p>I set up a splunk docker container recently and there were a couple what feel like oddities catching me up.&lt;/p>
+&lt;ol>
+&lt;li>Default debian doesn&amp;rsquo;t have world readable log files.&lt;/li>
+&lt;li>This is not for production. But it&amp;rsquo;s okay for my homelab.&lt;/li>
+&lt;/ol>
+&lt;p>Starting with this basic docker-compose file we made sure it worked.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">version&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;3.6&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">services&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">so1&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">${SPLUNK_IMAGE:-splunk/splunk:latest}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">container_name&lt;/span>: &lt;span style="color:#ae81ff">so1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">environment&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">SPLUNK_START_ARGS=--accept-license&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">SPLUNK_PASSWORD&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">ports&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">8000&lt;/span>:&lt;span style="color:#ae81ff">8000&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It&amp;rsquo;s simple, gets everything running without doing anything fancy. Let&amp;rsquo;s iterate it fancier and match the style of the rest of my compose files.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">version&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;3.6&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">services&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">splunk&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">splunk/splunk:latest&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">container_name&lt;/span>: &lt;span style="color:#ae81ff">splunk&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">env_file&lt;/span>: &lt;span style="color:#ae81ff">.env&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">environment&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">SPLUNK_START_ARGS=--accept-license&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">volumes&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">splunk_config:/opt/splunk/etc&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">splunk_data:/opt/splunk/var&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/var/log:/host/var/log:ro&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">ports&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">8000&lt;/span>:&lt;span style="color:#ae81ff">8000&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">restart&lt;/span>: &lt;span style="color:#ae81ff">unless-stopped&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">networks&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">mgmt_network&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">labels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.enable=true&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.splunk-http.entrypoints=web&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.splunk-http.rule=Host(`splunk.${DOMAIN}`)&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.splunk-http.middlewares=splunk-https&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.middlewares.splunk-https.redirectscheme.scheme=https&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.splunk.entrypoints=websecure&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.splunk.rule=Host(`splunk.${DOMAIN}`)&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.splunk.tls=true&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.secwhoami.tls.certresolver=myresolver&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.services.splunk.loadbalancer.server.port=8000&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">volumes&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">splunk_config&lt;/span>: {}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">splunk_data&lt;/span>: {}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">networks&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mgmt_network&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">external&lt;/span>: &lt;span style="color:#66d9ef">true&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This is what we end up with after a couple iterations. But largely it matches the style and layout of the rest of my compose files. Three large changes:&lt;/p>
+&lt;ol>
+&lt;li>I&amp;rsquo;ve moved the splunk password out of the compose file to a .env file (which gets encrypted for storing in git)&lt;/li>
+&lt;li>Added data persistence&lt;/li>
+&lt;li>Added Traefik labels, and network traefik watches&lt;/li>
+&lt;/ol>
+&lt;p>There was a slight problem once this was done, all of the files in &lt;code>/var/log&lt;/code> aren&amp;rsquo;t world readable. After a bit of searching we come across the splunk community forums detailing a similar issue &lt;a href="https://community.splunk.com/t5/Security/How-to-monitor-root-owned-logs-while-running-Splunk-as-a-non/td-p/16594">community.splunk.com&lt;/a> while this isn&amp;rsquo;t a docker solution it&amp;rsquo;s a solution to the problem. If not the most docker centric approach it beats setting up a universal forwarder to get files to the same machine.&lt;/p>
+&lt;p>Boiling it down we need to install acl controls, create a splunk user on the host, set up a logrotate rule file.&lt;/p>
+&lt;h2 id="accomplishing-1-and-2">Accomplishing 1 and 2:&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>sudo apt install acl
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>sudo groupadd -g &lt;span style="color:#ae81ff">41812&lt;/span> splunk
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>sudo adduser --uid &lt;span style="color:#ae81ff">41812&lt;/span> splunk --shell /sbin/nologin --system --no-create-home --gid &lt;span style="color:#ae81ff">41812&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Notice we created a group then created the user. The version of debian I was running with the version of adduser I had wasn&amp;rsquo;t permitting to explicity specify that I needed a primary group matching the user. Making the user on its own was causing the user to get put in a group &amp;ldquo;nogroup&amp;rdquo;. Probably user error.&lt;/p>
+&lt;h2 id="accomplishing-number-3">Accomplishing number 3:&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>cat /etc/logrotate.d/Splunk_ACLs
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>/var/log/splunklog
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> postrotate
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> /usr/bin/setfacl -m g:splunk:r /var/log/auth.log
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> /usr/bin/setfacl -m g:splunk:r /var/log/messages
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> /usr/bin/setfacl -m g:splunk:r /var/log/syslog
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> endscript
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Understanding this fully needs a bit of background.&lt;/p>
+&lt;h3 id="logrotate">logrotate&lt;/h3>
+&lt;p>As a broad stroke logrotate has a simple task. Keep files manageable.&lt;/p>
+&lt;p>logrotate performs this function through keeping track of the size of the file, or at regular intervals renames the file adding a &lt;code>.#&lt;/code> onto the end of the filename. The tool is capable of much more but we don&amp;rsquo;t want to delve too far into that.&lt;/p>
+&lt;p>The directory &lt;code>/etc/logrotate.d/&lt;/code> is charged with holding different configurations for various packages. In this case we&amp;rsquo;ve both created a dummy file &lt;code>/var/log/splunklog&lt;/code> and listed various rules on how logrotate should interact with that file. By default this file will be run daily as the root user.&lt;/p>
+&lt;h3 id="file-acls">File ACLs&lt;/h3>
+&lt;p>The keywords &lt;code>postrotate&lt;/code> and &lt;code>endscript&lt;/code> desginate a block of actions that should be perfomed when the file &lt;code>Splunk_ACLs&lt;/code> is executed daily. This helps ensure that the specified actions are maintained on the specific files listed.&lt;/p>
+&lt;p>Lets break down the line(s) &lt;code>/usr/bin/setfacl -m g:splunk:r /var/log/auth.log&lt;/code>&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>/usr/bin/setfacl&lt;/code> is a command with the sole purpose of setting linux file ACL rules.&lt;/li>
+&lt;li>&lt;code>-m&lt;/code> modify the rules on the designated file&lt;/li>
+&lt;li>&lt;code>g:splunk:r&lt;/code> pretty simple. This is where we specify new rules that should be active on the file. &lt;code>:&lt;/code> is a delimiter splitting this into a three part spec.&lt;/li>
+&lt;/ul>
+&lt;p>that spec reads as follows:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>g&lt;/code> says that the following piece will be either a gid or a group name.&lt;/li>
+&lt;li>&lt;code>splunk&lt;/code> the name of the group, we&amp;rsquo;re opting for readability by using a group name.&lt;/li>
+&lt;li>&lt;code>r&lt;/code> the octal or relative form, if using relative any of &lt;code>rwx&lt;/code> can be used, we&amp;rsquo;ll be opting for read-only for logs in this case.&lt;/li>
+&lt;/ul></content></item><item><title>An Entry</title><link>https://blog.sions.org/posts/an-entry/</link><pubDate>Sat, 07 Jan 2023 05:33:12 +0000</pubDate><guid>https://blog.sions.org/posts/an-entry/</guid><description>My first post. Well my first actual post was supposed to be a log/ tutorial/ step by step/ whatever of setting up Jekyll and Backblaze and cloudflare. Well that was several days ago. Now I&amp;rsquo;m typing this, a quick draft within Google Keep. Turn it into Markdown tomorrow. Post it day after. But largely I&amp;rsquo;ve been dragging my feet, what&amp;rsquo;s the goal of this blog? Is there one? Does there need to be one?</description><content>&lt;p>My first post. Well my first &lt;em>actual&lt;/em> post was supposed to be a log/ tutorial/ step by step/ whatever of setting up Jekyll and Backblaze and cloudflare. Well that was several days ago. Now I&amp;rsquo;m typing this, a quick draft within Google Keep. Turn it into Markdown tomorrow. Post it day after. But largely I&amp;rsquo;ve been dragging my feet, what&amp;rsquo;s the goal of this blog? Is there one? Does there need to be one?&lt;/p></content></item><item><title>Hello World</title><link>https://blog.sions.org/posts/hello-world/</link><pubDate>Sun, 01 Jan 2023 17:56:42 +0000</pubDate><guid>https://blog.sions.org/posts/hello-world/</guid><description>hello world!</description><content>&lt;p>hello world!&lt;/p></content></item></channel></rss>
