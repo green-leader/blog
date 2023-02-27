@@ -1,4 +1,109 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>docker on Blog</title><link>https://blog.sions.org/tags/docker/</link><description>Recent content in docker on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 20 Feb 2023 03:24:33 +0000</lastBuildDate><atom:link href="https://blog.sions.org/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Splunk Setup</title><link>https://blog.sions.org/posts/splunk-setup/</link><pubDate>Mon, 20 Feb 2023 03:24:33 +0000</pubDate><guid>https://blog.sions.org/posts/splunk-setup/</guid><description>I set up a splunk docker container recently and there were a couple what feel like oddities catching me up.
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>docker on Blog</title><link>https://blog.sions.org/tags/docker/</link><description>Recent content in docker on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 27 Feb 2023 05:33:12 +0000</lastBuildDate><atom:link href="https://blog.sions.org/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Publishing Obsidian Documentation</title><link>https://blog.sions.org/posts/docs-publishing/</link><pubDate>Mon, 27 Feb 2023 05:33:12 +0000</pubDate><guid>https://blog.sions.org/posts/docs-publishing/</guid><description>I keep my notes in markdown files in a git repo my primary editor is a tool called obsidian.md. I&amp;rsquo;ve got minor gripes and for the most part I&amp;rsquo;ve got it syncing well and working well. However, a nice to have feature would be to share individual documents with the public. Couple examples, keeping a digital recipe box for the household to read from or sharing TTRPG notes after a session.</description><content>&lt;p>I keep my notes in markdown files in a git repo my primary editor is a tool called &lt;a href="https://obsidian.md/">obsidian.md&lt;/a>. I&amp;rsquo;ve got minor gripes and for the most part I&amp;rsquo;ve got it syncing well and working well. However, a nice to have feature would be to share individual documents with the public. Couple examples, keeping a digital recipe box for the household to read from or sharing TTRPG notes after a session.&lt;/p>
+&lt;p>For right now I want to set it up such that I can share things with the household. Log into the designated subdomain, and so long as you&amp;rsquo;re on my network using my DNS server it should load happily.&lt;/p>
+&lt;p>Here&amp;rsquo;s the process I&amp;rsquo;ve taken and settled on for now.&lt;/p>
+&lt;p>Workflow:&lt;/p>
+&lt;ol>
+&lt;li>sync git repo&lt;/li>
+&lt;li>process markdown into HTML&lt;/li>
+&lt;li>serve HTML with a web server&lt;/li>
+&lt;/ol>
+&lt;p>Tools:&lt;/p>
+&lt;ol>
+&lt;li>Githubs cli tool &lt;a href="https://github.com/cli/cli">github.com/cli/cli&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://github.com/devidw/obsidian-to-hugo">obsidian-to-hugo&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://gohugo.io/">hugp&lt;/a>&lt;/li>
+&lt;li>nginx running on docker&lt;/li>
+&lt;/ol>
+&lt;h3 id="workflow-step-1">Workflow Step 1:&lt;/h3>
+&lt;p>Something I&amp;rsquo;ve been trying to deal with and come up with a solution I like is giving my server read-only access to multiple private repos. As of the time of this writing I keep most of my git repositories located at github. Github doesn&amp;rsquo;t allow you to specify an ssh key as a deploy key to multiple projects. And the deploy keys work great if you only need to grant access to 1 repo. But this runs into problems when you&amp;rsquo;re trying to grant access to several, purely from a management standpoint. how you do you cleanly associate an ssh key with individual repos then refer to them. I saw some hacks online but I hadn&amp;rsquo;t liked any of them.&lt;/p>
+&lt;p>Doing a bit of experimenting on this when I was trying to deploy this I remembered the Github CLI tool. After some trial and error I found that you can not use a personal access token however neither fine-grained tokens or classic tokens seem to have access to just perform read-only actions on the content of repos. I ended up using http authentication, logging in as myself. While writing this I&amp;rsquo;m trying to think if it&amp;rsquo;s got read-only access or full read-write. I&amp;rsquo;ll have to investigate it later.&lt;/p>
+&lt;h3 id="workflow-step-2">Workflow Step 2:&lt;/h3>
+&lt;p>Processing markdown files into HTML is a joint problem. There&amp;rsquo;s a number of static site generators that will take in markdown and output HTML. The tool i&amp;rsquo;m most familiar with is hugo, which is what this blog is using. Doing a bit of research I found a python module that converts obsidian markdown files into hugo markdown files.&lt;/p>
+&lt;p>looking at the readme it also provides functionality on scanning the contents of the file for specific conditions as to whether it should graduate into a published document. I&amp;rsquo;ve got a small python script written below which I run before I have hugo process the documents into HTML.&lt;/p>
+&lt;p>process.py:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> obsidian_to_hugo &lt;span style="color:#f92672">import&lt;/span> ObsidianToHugo
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">filter_file&lt;/span>(file_contents: str, file_path: str) &lt;span style="color:#f92672">-&amp;gt;&lt;/span> bool:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#e6db74">&amp;#34;publish: true&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">---&amp;#34;&lt;/span> &lt;span style="color:#f92672">in&lt;/span> file_contents:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#66d9ef">True&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#66d9ef">False&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#e6db74">&amp;#34;template_&amp;#34;&lt;/span> &lt;span style="color:#f92672">in&lt;/span> file_path:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#66d9ef">False&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>obsidian_to_hugo &lt;span style="color:#f92672">=&lt;/span> ObsidianToHugo(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> obsidian_vault_dir&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;/local/kb-obsidian&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> hugo_content_dir&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;/local/hugo-site/content&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> filters&lt;span style="color:#f92672">=&lt;/span>[filter_file],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>obsidian_to_hugo&lt;span style="color:#f92672">.&lt;/span>run()
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This is a pretty strightforward snippet on the python projects readme I&amp;rsquo;ve adjusted a bit for my needs.&lt;/p>
+&lt;p>After generating the content with that processing script we now need to trigger hugo to run and convert the content markdown files into HTML. Creating and configuring the initial hugo site only needs to be done the first time, but after that you can just change to the hugo site directory, then execute a simple &lt;code>hugo&lt;/code>. Depending on which theme you&amp;rsquo;re using it could require the extended version of hugo. Below I&amp;rsquo;ve included my config file.&lt;/p>
+&lt;p>When taking notes I will add page links to pages that don&amp;rsquo;t exist. This can cause hugo to throw a fit and refuse to process then the files.
+&lt;code>REF_NOT_FOUND: Ref &amp;quot;Azure&amp;quot;: &amp;lt;snip&amp;gt;: page not found&lt;/code>&lt;/p>
+&lt;p>Adding &lt;code>refLinksErrorLevel = &amp;quot;WARNING&amp;quot;&lt;/code> to the config file results in warnings still being emitted but will tell hugo that it&amp;rsquo;s alright.&lt;/p>
+&lt;p>hugo config.toml&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-toml" data-lang="toml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">baseURL&lt;/span> = &lt;span style="color:#e6db74">&amp;#39;/&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">languageCode&lt;/span> = &lt;span style="color:#e6db74">&amp;#39;en-us&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">title&lt;/span> = &lt;span style="color:#e6db74">&amp;#39;My New Hugo Site&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">theme&lt;/span> = &lt;span style="color:#e6db74">&amp;#39;ananke&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">refLinksErrorLevel&lt;/span> = &lt;span style="color:#e6db74">&amp;#34;WARNING&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="workflow-step-3">Workflow Step 3:&lt;/h3>
+&lt;p>This is for the most part the simplest step, couple bullet points:&lt;/p>
+&lt;ul>
+&lt;li>Create a custom nginx config&lt;/li>
+&lt;li>Point nginx at the hugo sites public directory&lt;/li>
+&lt;li>Launch nginx container&lt;/li>
+&lt;/ul>
+&lt;p>I like to set the volume mounting and launch the container to create the directory structure. Replacing &lt;code>nginx/nginx/site-confs/default.conf&lt;/code> with our custom config.&lt;/p>
+&lt;p>nginx config file&lt;/p>
+&lt;pre tabindex="0">&lt;code>server {
+listen 80 default_server;
+listen [::]:80 default_server;
+server_name _;
+set $root /app/www/public;
+if (!-d /app/www/public) {
+set $root /config/www;
+}
+root $root;
+index index.HTML;
+location / {
+try_files $uri $uri/ /index.HTML /index.php$is_args$args =404;
+add_header &amp;#39;Access-Control-Allow-Origin&amp;#39; &amp;#39;*&amp;#39;; # Allow access to resources (for www and non www)
+}
+}
+&lt;/code>&lt;/pre>&lt;p>docker-compose.yml&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>---
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">version&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2.1&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">services&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">nginx-docs&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">lscr.io/linuxserver/nginx:latest&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">env_file&lt;/span>: &lt;span style="color:#ae81ff">.env&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">volumes&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">./nginx:/config&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">./hugo-site/public:/config/www&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">ports&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">3003&lt;/span>:&lt;span style="color:#ae81ff">80&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">restart&lt;/span>: &lt;span style="color:#ae81ff">unless-stopped&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">networks&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">mgmt_network&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">labels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.enable=true&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs-http.entrypoints=web&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs-http.rule=Host(`docs.${DOMAIN}`)&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs-http.middlewares=docs-https&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.middlewares.docs-https.redirectscheme.scheme=https&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs.entrypoints=websecure&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs.rule=Host(`docs.${DOMAIN}`)&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs.tls=true&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.routers.docs.tls.certresolver=myresolver&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;traefik.http.services.docs.loadbalancer.server.port=80&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">networks&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mgmt_network&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">external&lt;/span>: &lt;span style="color:#66d9ef">true&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Now when someone on the wifi goes the the subdomain docs on my internal domain name they get served the default hugo index page. There&amp;rsquo;s no sitemap, but if things link to each other correctly it&amp;rsquo;s plenty user friendly. While it&amp;rsquo;s not pretty it&amp;rsquo;s a minimum viable product and I plan to further iterate on it.&lt;/p></content></item><item><title>Splunk Setup</title><link>https://blog.sions.org/posts/splunk-setup/</link><pubDate>Mon, 20 Feb 2023 03:24:33 +0000</pubDate><guid>https://blog.sions.org/posts/splunk-setup/</guid><description>I set up a splunk docker container recently and there were a couple what feel like oddities catching me up.
 Default debian doesn&amp;rsquo;t have world readable log files. This is not for production. But it&amp;rsquo;s okay for my homelab. Starting with this basic docker-compose file we made sure it worked.
 version: &amp;#34;3.6&amp;#34; services: so1: image: ${SPLUNK_IMAGE:-splunk/splunk:latest} container_name: so1 environment: - SPLUNK_START_ARGS=--accept-license - SPLUNK_PASSWORD ports: - 8000:8000 It&amp;rsquo;s simple, gets everything running without doing anything fancy.</description><content>&lt;p>I set up a splunk docker container recently and there were a couple what feel like oddities catching me up.&lt;/p>
 &lt;ol>
