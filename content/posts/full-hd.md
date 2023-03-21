@@ -1,7 +1,7 @@
 +++
 title = "Full Hd"
 publishDate = "2023-03-20T08:00:00Z"
-tags = ["", ""]
+tags = ["System Administration", "Docker", "Logging"]
 showFullContent = false
 readingTime = false
 hideComments = false
