@@ -1,4 +1,54 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>docker on Blog</title><link>https://blog.sions.org/tags/docker/</link><description>Recent content in docker on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 27 Feb 2023 05:33:12 +0000</lastBuildDate><atom:link href="https://blog.sions.org/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Publishing Obsidian Documentation</title><link>https://blog.sions.org/posts/docs-publishing/</link><pubDate>Mon, 27 Feb 2023 05:33:12 +0000</pubDate><guid>https://blog.sions.org/posts/docs-publishing/</guid><description>I keep my notes in markdown files in a git repo my primary editor is a tool called obsidian.md. I&amp;rsquo;ve got minor gripes and for the most part I&amp;rsquo;ve got it syncing well and working well. However, a nice to have feature would be to share individual documents with the public. Couple examples, keeping a digital recipe box for the household to read from or sharing TTRPG notes after a session.</description><content>&lt;p>I keep my notes in markdown files in a git repo my primary editor is a tool called &lt;a href="https://obsidian.md/">obsidian.md&lt;/a>. I&amp;rsquo;ve got minor gripes and for the most part I&amp;rsquo;ve got it syncing well and working well. However, a nice to have feature would be to share individual documents with the public. Couple examples, keeping a digital recipe box for the household to read from or sharing TTRPG notes after a session.&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>docker on Blog</title><link>https://blog.sions.org/tags/docker/</link><description>Recent content in docker on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 20 Mar 2023 08:00:00 +0000</lastBuildDate><atom:link href="https://blog.sions.org/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Full Hd</title><link>https://blog.sions.org/posts/full-hd/</link><pubDate>Mon, 20 Mar 2023 08:00:00 +0000</pubDate><guid>https://blog.sions.org/posts/full-hd/</guid><description>I woke up this morning to my RSS feed misbehaving. FreshRSS was popping up an error along the lines that it was unable to make an internet connection. This was a little odd as I was connected over the local network to the app. It was loading at all which meant it could connect. I won&amp;rsquo;t bore you with how I found the problem, but the root partition of the server was full.</description><content>&lt;p>I woke up this morning to my RSS feed misbehaving. FreshRSS was popping up an error along the lines that it was unable to make an internet connection. This was a little odd as I was connected over the local network to the app. It was loading at all which meant it could connect. I won&amp;rsquo;t bore you with how I found the problem, but the root partition of the server was full.&lt;/p>
+&lt;p>A full root partition can cause a wide array of problems. As there shouldn&amp;rsquo;t be anything downloading to this partition it was well over what it should be. The root partition is located on a 112 GB SSD. so there&amp;rsquo;s not a whole lot but after cleaning up space I found that I was using less than a quarter of the drive.&lt;/p>
+&lt;p>When the drive is full you need to prioritze geting any space. just so the system can start to breathe again.&lt;/p>
+&lt;p>As this is a docker host &lt;code>docker system prune&lt;/code> is a great candidate. It only cleared off a few hundred megs but it did what it was supposed to in this instance. Now we can search down and track down what the issue is.&lt;/p>
+&lt;p>&lt;code>sudo du -hsx /* | sort -rh | head -n 5&lt;/code>
+Couple things going on so lets break down the arguments
+&lt;code>du -hsx&lt;/code>:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>h&lt;/code>: Human readable output. As a lowly human just reading bytes is hard.&lt;/li>
+&lt;li>&lt;code>s&lt;/code>: summarize, just put the totals on everything that du is ran against.&lt;/li>
+&lt;li>&lt;code>x&lt;/code>: one-file-system. Don&amp;rsquo;t leave the filesystem, as we are only looking at the root partiition we don&amp;rsquo;t need to know about everything that&amp;rsquo;s mounted within the &lt;code>/&lt;/code> filesystem.&lt;/li>
+&lt;/ul>
+&lt;p>&lt;code>sort -rh&lt;/code>:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>r&lt;/code>: Reverse. We want the big numbers first&lt;/li>
+&lt;li>&lt;code>h&lt;/code>: human-numeric-sort. We&amp;rsquo;re using human numbers because we&amp;rsquo;re human.&lt;/li>
+&lt;/ul>
+&lt;p>&lt;code>head -n 10&lt;/code>:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>n&lt;/code>: Pretty simple, this is how many lines we want. By specifying a number we&amp;rsquo;re not just using the default.&lt;/li>
+&lt;/ul>
+&lt;p>And the output:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>$ sudo du -hsx /* | sort -rh | head -n &lt;span style="color:#ae81ff">5&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>86G /var
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>3.2G /home
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>2.0G /usr
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>81M /boot
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>3.9M /etc
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Well it&amp;rsquo;s &lt;code>/var&lt;/code> as a culprit. We can just run the same command but specifying the path so we can dig in and keep digging down to find where the issue is. I won&amp;rsquo;t post the outputs but I&amp;rsquo;ll give the commands:&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>$ sudo du -hsx /var/* | sort -rh | head -n 5&lt;/code>&lt;/li>
+&lt;li>&lt;code>$ sudo du -hsx /var/lib/* | sort -rh | head -n 5&lt;/code>&lt;/li>
+&lt;li>&lt;code>$ sudo du -hsx /var/lib/docker/* | sort -rh | head -n 5&lt;/code>&lt;/li>
+&lt;li>&lt;code>$ sudo du -hsx /var/lib/docker/containers/* | sort -rh | head -n 5&lt;/code>&lt;/li>
+&lt;/ol>
+&lt;p>And the output for that last command points where the culprit is, mainly this nifty line:&lt;code>64G /var/lib/docker/containers/containers/c585fa6366ddbd90e8565e07797431deab5c86bd157f757317d3b0655c099562&lt;/code>&lt;/p>
+&lt;p>Looking a bit further (I forgot to grab logs of my commands) we can see that the container log(s) is a single 63 gig file. Whelp. There&amp;rsquo;s the problem. A single docker container log is eating up 64 gigs of data, probaly bad configuration on my part. Using &lt;code>docker inspect&lt;/code> we can find out which container was badly configured. Ended up being my borgmatic container, which has been running daily for over a month. Great! A log file is an easy fix! We just need to implement log rotation.&lt;/p>
+&lt;p>Couple different ways we can do it.&lt;/p>
+&lt;ul>
+&lt;li>logrotate daemon&lt;/li>
+&lt;li>docker daemon log-driver settings&lt;/li>
+&lt;/ul>
+&lt;p>The docker daemon is probably a little easier to configure, but I&amp;rsquo;m also just more comfortable with it. Setting defaults on the docker stuff is primarily done via the config file which on a linux system is at &lt;code>/etc/docker/daemon.json&lt;/code>. This file may need to be created, and we&amp;rsquo;ll do so putting the below into the file. Updating this file and restarting the service via &lt;code>sudo systemctl restart docker.service&lt;/code> will cause any new container to use these new logging driver settings. As this isn&amp;rsquo;t a new container we&amp;rsquo;ll just use &lt;code>docker-compose down&lt;/code> followed by &lt;code>docker-compose up -d&lt;/code> on the compose file with the culprit container.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-json" data-lang="json">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;log-driver&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;local&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;log-opts&amp;#34;&lt;/span>: {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;max-size&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;15m&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;max-file&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;5&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>After updating these settings we can see that was the issue &lt;code>df -h&lt;/code> is now reporting that the root partition is at 27G which is much much better. Should figure out how to send logs to splunk. Though I&amp;rsquo;m not sure I like using splunk. We should also set up monitoring to get a notification when we get close to filling the drive again.&lt;/p></content></item><item><title>Publishing Obsidian Documentation</title><link>https://blog.sions.org/posts/docs-publishing/</link><pubDate>Mon, 27 Feb 2023 05:33:12 +0000</pubDate><guid>https://blog.sions.org/posts/docs-publishing/</guid><description>I keep my notes in markdown files in a git repo my primary editor is a tool called obsidian.md. I&amp;rsquo;ve got minor gripes and for the most part I&amp;rsquo;ve got it syncing well and working well. However, a nice to have feature would be to share individual documents with the public. Couple examples, keeping a digital recipe box for the household to read from or sharing TTRPG notes after a session.</description><content>&lt;p>I keep my notes in markdown files in a git repo my primary editor is a tool called &lt;a href="https://obsidian.md/">obsidian.md&lt;/a>. I&amp;rsquo;ve got minor gripes and for the most part I&amp;rsquo;ve got it syncing well and working well. However, a nice to have feature would be to share individual documents with the public. Couple examples, keeping a digital recipe box for the household to read from or sharing TTRPG notes after a session.&lt;/p>
 &lt;p>For right now I want to set it up such that I can share things with the household. Log into the designated subdomain, and so long as you&amp;rsquo;re on my network using my DNS server it should load happily.&lt;/p>
 &lt;p>Here&amp;rsquo;s the process I&amp;rsquo;ve taken and settled on for now.&lt;/p>
 &lt;p>Workflow:&lt;/p>
