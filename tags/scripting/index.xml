@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Scripting on Blog</title><link>https://blog.sions.org/tags/scripting/</link><description>Recent content in Scripting on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 05 Jul 2023 08:00:00 +0000</lastBuildDate><atom:link href="https://blog.sions.org/tags/scripting/index.xml" rel="self" type="application/rss+xml"/><item><title>Unraid Scripts</title><link>https://blog.sions.org/posts/unraid-scripts/</link><pubDate>Wed, 05 Jul 2023 08:00:00 +0000</pubDate><guid>https://blog.sions.org/posts/unraid-scripts/</guid><description>One of the services my unRaid box runs is a borgbackup server (which is secretly just an SSH server with a forced command). As a check to make sure the important repos are indeed getting backed up to I&amp;rsquo;ve got a script running daily via the User Scripts Plugin. It&amp;rsquo;s a pretty simple script, all it does is check when the files in certain target repos have last been written to.</description><content>&lt;p>One of the services my unRaid box runs is a borgbackup server (which is secretly just an SSH server with a forced command). As a check to make sure the important repos are indeed getting backed up to I&amp;rsquo;ve got a script running daily via the &lt;em>User Scripts&lt;/em> Plugin. It&amp;rsquo;s a pretty simple script, all it does is check when the files in certain target repos have last been written to. If it hasn&amp;rsquo;t been in the last 7 days we send a Discord message for awareness.&lt;/p>
+&lt;p>Recently I was performing some maintenance and my script ran warning me that they all had not been written to within that cutoff. While I was investigating the logs it took me an embarrassingly long period of time to realize the unRaid array was simply not running. So, where the script was checking was missing. Time to add some safety to the script. Now the first section runs and the script will exit if the Array isn’t running.&lt;/p>
+&lt;p>Borg Check Script:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#!/bin/bash
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Check if array is started&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ls /mnt/disk&lt;span style="color:#f92672">[&lt;/span>1-9&lt;span style="color:#f92672">]&lt;/span>* 1&amp;gt;/dev/null 2&amp;gt;/dev/null
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> ! ls /mnt/disk&lt;span style="color:#f92672">[&lt;/span>1-9&lt;span style="color:#f92672">]&lt;/span>*
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;ERROR: Array must be started before using this script&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> exit
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">fi&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>readonly WEBHOOK_URL&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;https://discord.com/api/webhooks/0000/XXXX&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># List of directories to check&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>readonly WATCH_DIRS&lt;span style="color:#f92672">=(&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;/mnt/dir1&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;/mnt/dir2&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;/mnt/dir3&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Function to send a Discord webhook message&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>send_discord_message&lt;span style="color:#f92672">()&lt;/span> &lt;span style="color:#f92672">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> local message&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>$1&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> local payload&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;{\&amp;#34;content\&amp;#34;: \&amp;#34;&lt;/span>$message&lt;span style="color:#e6db74">\&amp;#34;}&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> curl -H &lt;span style="color:#e6db74">&amp;#34;Content-Type: application/json&amp;#34;&lt;/span> -d &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$payload&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$WEBHOOK_URL&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Iterate over the directories&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">for&lt;/span> dir in &lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#e6db74">${&lt;/span>WATCH_DIRS[@]&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>; &lt;span style="color:#66d9ef">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e"># Check if any files were modified in the last 7 days&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> find &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$dir&lt;span style="color:#e6db74">&amp;#34;&lt;/span> -type f -newermt &lt;span style="color:#e6db74">&amp;#34;-7 days&amp;#34;&lt;/span> 2&amp;gt;/dev/null | grep -q .; &lt;span style="color:#66d9ef">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">continue&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fi&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e"># Send Discord webhook message for directories without recent changes&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> MESSAGE&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;Directory &lt;/span>$dir&lt;span style="color:#e6db74"> has not been modified in the last 7 days&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> send_discord_message &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$MESSAGE&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$MESSAGE&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">done&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></content></item></channel></rss>
