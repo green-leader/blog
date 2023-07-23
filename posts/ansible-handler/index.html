@@ -1,0 +1,191 @@
+<!doctype html><html lang=en><head><title>Ansible Handler :: Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Spent a good part of the morning working on writing an Ansible playbook to install and setup promtail on a new server, adding it to the central logging setup.
+At first I started manually downloading the binary and manually installing it when I remembered I wanted to work on using ansible more. So I stopped where I was and started over again except this time electing to use the power of automation."><meta name=keywords content><meta name=robots content="noodp"><link rel=canonical href=https://blog.sions.org/posts/ansible-handler/><link rel=stylesheet href=/style.css><link rel="shortcut icon" href=https://blog.sions.org/img/theme-colors/green.png><link rel=apple-touch-icon href=https://blog.sions.org/img/theme-colors/green.png><meta name=twitter:card content="summary"><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="og:title" content="Ansible Handler"><meta property="og:description" content="Spent a good part of the morning working on writing an Ansible playbook to install and setup promtail on a new server, adding it to the central logging setup.
+At first I started manually downloading the binary and manually installing it when I remembered I wanted to work on using ansible more. So I stopped where I was and started over again except this time electing to use the power of automation."><meta property="og:url" content="https://blog.sions.org/posts/ansible-handler/"><meta property="og:site_name" content="Blog"><meta property="og:image" content="https://blog.sions.org/img/favicon/green.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="627"><meta property="article:published_time" content="2023-07-23 08:00:00 +0000 UTC"><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest></head><body class=green><div class="container headings--one-size"><header class=header><div class=header__inner><div class=header__logo><a href=/><div class=logo>Terminal</div></a></div><ul class="menu menu--mobile"><li class=menu__trigger>Menu&nbsp;▾</li><li><ul class=menu__dropdown><li><a href=/about>About</a></li></ul></li></ul></div><nav class=navigation-menu><ul class="navigation-menu__inner menu--desktop"><li><a href=/about>About</a></li></ul></nav></header><div class=content><article class=post><h1 class=post-title><a href=https://blog.sions.org/posts/ansible-handler/>Ansible Handler</a></h1><div class=post-meta><time class=post-date>2023-07-23 ::</time></div><span class=post-tags>#<a href=https://blog.sions.org/tags/ansible/>Ansible</a>&nbsp;
+#<a href=https://blog.sions.org/tags/system-administration/>System Administration</a>&nbsp;
+#<a href=https://blog.sions.org/tags/today-i-learned/>Today I Learned</a>&nbsp;
+#<a href=https://blog.sions.org/tags/promtail/>Promtail</a>&nbsp;
+#<a href=https://blog.sions.org/tags/loki/>Loki</a>&nbsp;</span><div class=post-content><div><p>Spent a good part of the morning working on writing an Ansible playbook to install and setup promtail on a new server, adding it to the central logging setup.</p><p>At first I started manually downloading the binary and manually installing it when I remembered I wanted to work on using ansible more. So I stopped where I was and started over again except this time electing to use the power of automation.
+Pretty simple what we needed to do</p><ol><li>Download and install the binary</li><li>Install the config file</li><li>Create a service user</li><li>Create a systemd unit and start it</li></ol><h3 id=create-an-empty-playbook>Create an empty playbook<a href=#create-an-empty-playbook class=hanchor arialabel=Anchor>&#8983;</a></h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>---
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Installing and configuring Promtail</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>hosts</span>: <span style=color:#ae81ff>all</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>tasks</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Hello World</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.debug</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>msg</span>: <span style=color:#e6db74>&#34;Hello World!&#34;</span>
+</span></span></code></pre></div><p>As with any good software project we start with a basic template which we&rsquo;ll expand upon. This simply outputs &ldquo;Hello World!&rdquo; and finishes the playbook.</p><p>and to check our work:
+<code>ansible-playbook -i 192.0.2.2, playbook.yml</code></p><h3 id=download-and-install-the-binary>Download and install the binary<a href=#download-and-install-the-binary class=hanchor arialabel=Anchor>&#8983;</a></h3><p>Replacing our hello world task we create two more, the first:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Download binary</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>ansible.builtin.unarchive</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>src</span>: <span style=color:#e6db74>&#34;https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/tmp</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span></code></pre></div><p>There are a few things of note going on here. The module will automatically download and extract the archive from the URI given (but in this case &ldquo;unzip&rdquo; needs to be installed on the target host). Notice how the URI is in quotes and some curly braces are in the middle, this is because further up the document we&rsquo;ve defined the version of promtail we want as a variable. Like so</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span><span style=color:#f92672>vars</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>promtail_version</span>: <span style=color:#e6db74>&#34;2.8.2&#34;</span>
+</span></span></code></pre></div><p>Lastly we&rsquo;ve set <code>remote_src</code> to true, this tells ansible that the file in question is located on the host that it&rsquo;s currently working on.</p><p>The task responsible for installing the freshly downloaded binary.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Install binary</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>src</span>: <span style=color:#ae81ff>/tmp/promtail-linux-amd64</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/usr/local/bin/promtail</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0754&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span></code></pre></div><p>This one is fairly self explanatory. We&rsquo;re using copy to move the binary. Then changing the owner and setting permissions. Again <code>remote_src</code> is used to tell ansible the file is on the host it&rsquo;s working on. I like specifying become on the per task level as opposed to per playbook, this helps with only needing to be root when needed.</p><h3 id=install-the-config-file>Install the config file<a href=#install-the-config-file class=hanchor arialabel=Anchor>&#8983;</a></h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create Promtail directory</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.file</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>path</span>: <span style=color:#e6db74>&#34;/etc/promtail&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>directory</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0755&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Ensure Promtail config in place</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.template</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>src</span>: <span style=color:#ae81ff>promtail-config.yml.j2</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/etc/promtail/config.yml</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#ae81ff>Reload promtail service</span>
+</span></span></code></pre></div><p>These two tasks are pretty simple, create a directory for promtail config files. Then copy the config file, while replacing the jinja variables in the template. While I was iterating on the file, I ran into a minor issue where I would run the playbook with an updated config file. It would successfully run, but promtail was using the old config file. I ended up learning about Ansible Handlers. Before I had a task hacked together that would check if the previous task finished or not. Now I have a handler at the end of the document. Handlers are described a bit <a href=https://ansible.readthedocs.io/projects/lint/rules/no-handler/>here</a>.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Reload promtail service</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#ae81ff>promtail</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>restarted</span>
+</span></span></code></pre></div><p>The <code>notify</code> keyword at the end of the task triggers a handler when tasks are changed. Then the handler (which is identical to a normal task) is executed, which in this case reloads the service (which we haven&rsquo;t defined yet).</p><h3 id=create-a-service-user>Create a service user<a href=#create-a-service-user class=hanchor arialabel=Anchor>&#8983;</a></h3><p>This is a pretty simple task, we just create a system user, and give it access to the <code>adm</code> group, this will give it permissions to access most of the logs found in <code>/var/logs</code>. By creating a system user we&rsquo;re making a user that isn&rsquo;t for users. This is an automated account that processes can run over, this is best practice for security as we don&rsquo;t want processes running under regular users or root.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create Promtail service user</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.user</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#ae81ff>promtail</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>system</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>present</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>groups</span>: <span style=color:#e6db74>&#39;adm&#39;</span>
+</span></span></code></pre></div><h3 id=create-a-systemd-unit-and-start-it>Create a systemd unit and start it<a href=#create-a-systemd-unit-and-start-it class=hanchor arialabel=Anchor>&#8983;</a></h3><p>Again, just copying a file into place on the server, except we&rsquo;re also giving the text that should be in the source file instead of creating a source file. I haven&rsquo;t decided on a standard way to do this, and with a simple enough service file like the below it&rsquo;s probably okay to define in this case.</p><p>After installing the service, we start and enable it, then define a handler for in the event we replace service file with something else.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create Promtail service file</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>content</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        [Unit]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        Description=Promtail service for Grafana Loki
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        After=network.target
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        [Service]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        Type=simple
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        User=promtail
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail/config.yml
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        Restart=always
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        [Install]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        WantedBy=multi-user.target</span>        
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/etc/systemd/system/promtail.service</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Start Promtail service</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#ae81ff>promtail</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>enabled</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>started</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>handlers</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>daemon_reload</span>: <span style=color:#66d9ef>true</span>
+</span></span></code></pre></div><h3 id=the-end-result>The end result<a href=#the-end-result class=hanchor arialabel=Anchor>&#8983;</a></h3><p>This is what I ended up getting for the end result. In all it is pretty straightforward, and I think fairly easy to understand.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>---
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Installing and configuring Promtail</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>hosts</span>: <span style=color:#ae81ff>all</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>vars</span>:
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Get a version that matches Loki</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>promtail_version</span>: <span style=color:#e6db74>&#34;2.8.2&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>tasks</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Download binary</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.unarchive</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>src</span>: <span style=color:#e6db74>&#34;https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/tmp</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Install binary</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>src</span>: <span style=color:#ae81ff>/tmp/promtail-linux-amd64</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/usr/local/bin/promtail</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0754&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create Promtail directory</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.file</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>path</span>: <span style=color:#e6db74>&#34;/etc/promtail&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>directory</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0755&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Ensure Promtail config in place</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.template</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>src</span>: <span style=color:#ae81ff>promtail-config.yml.j2</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/etc/promtail/config.yml</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#ae81ff>Reload promtail service</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create Promtail service user</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.user</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#ae81ff>promtail</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>system</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>present</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>groups</span>: <span style=color:#e6db74>&#39;adm&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create Promtail service file</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>content</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          [Unit]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          Description=Promtail service for Grafana Loki
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          After=network.target
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          [Service]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          Type=simple
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          User=promtail
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail/config.yml
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          Restart=always
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          [Install]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          WantedBy=multi-user.target</span>          
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/etc/systemd/system/promtail.service</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Start Promtail service</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#ae81ff>promtail</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>enabled</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>started</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>handlers</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>daemon_reload</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Reload promtail service</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#ae81ff>promtail</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>restarted</span>
+</span></span></code></pre></div></div></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=https://blog.sions.org/posts/usb-wake/><span class=button__text>Usb Wake</span>
+<span class=button__icon>→</span></a></span></div></div></article></div><footer class=footer><div class=footer__inner><div class=copyright><span>© 2023 Powered by <a href=http://gohugo.io>Hugo</a></span>
+<span>:: Theme made by <a href=https://twitter.com/panr>panr</a></span></div></div></footer><script type=text/javascript src=/bundle.min.js></script></div></body></html>
