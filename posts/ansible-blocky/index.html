@@ -1,0 +1,189 @@
+<!doctype html><html lang=en><head><title>Ansible Blocky :: Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="I&amp;rsquo;ve given myself a personal goal of creating 100 ansible playbooks, I suppose roles would also count. The destination is essentially accomplishing 100 goals with ansible.
+These are what I&amp;rsquo;ve already accomplished.
+blocky.yml install_disable_usb_wake.yml install_sshd_config.yml install_sudo.yml lynis.yml podman.yml promtail.yml run_updates.yml Overall not terribly complex roles, most of them have hardcoded defaults but that&amp;rsquo;ll probably get resolved when the existing playbooks get converted to roles.
+Most recently I made a playbook that setup and configured blocky-dns which would be my 8th playbook."><meta name=keywords content><meta name=robots content="noodp"><link rel=canonical href=https://blog.sions.org/posts/ansible-blocky/><link rel=stylesheet href=/style.css><link rel="shortcut icon" href=https://blog.sions.org/img/theme-colors/green.png><link rel=apple-touch-icon href=https://blog.sions.org/img/theme-colors/green.png><meta name=twitter:card content="summary"><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="og:title" content="Ansible Blocky"><meta property="og:description" content="I&amp;rsquo;ve given myself a personal goal of creating 100 ansible playbooks, I suppose roles would also count. The destination is essentially accomplishing 100 goals with ansible.
+These are what I&amp;rsquo;ve already accomplished.
+blocky.yml install_disable_usb_wake.yml install_sshd_config.yml install_sudo.yml lynis.yml podman.yml promtail.yml run_updates.yml Overall not terribly complex roles, most of them have hardcoded defaults but that&amp;rsquo;ll probably get resolved when the existing playbooks get converted to roles.
+Most recently I made a playbook that setup and configured blocky-dns which would be my 8th playbook."><meta property="og:url" content="https://blog.sions.org/posts/ansible-blocky/"><meta property="og:site_name" content="Blog"><meta property="og:image" content="https://blog.sions.org/img/favicon/green.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="627"><meta property="article:published_time" content="2023-08-03 08:00:00 +0000 UTC"><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest></head><body class=green><div class="container headings--one-size"><header class=header><div class=header__inner><div class=header__logo><a href=/><div class=logo>Terminal</div></a></div><ul class="menu menu--mobile"><li class=menu__trigger>Menu&nbsp;▾</li><li><ul class=menu__dropdown><li><a href=/about>About</a></li></ul></li></ul></div><nav class=navigation-menu><ul class="navigation-menu__inner menu--desktop"><li><a href=/about>About</a></li></ul></nav></header><div class=content><article class=post><h1 class=post-title><a href=https://blog.sions.org/posts/ansible-blocky/>Ansible Blocky</a></h1><div class=post-meta><time class=post-date>2023-08-03 ::</time></div><span class=post-tags>#<a href=https://blog.sions.org/tags/ansible/>Ansible</a>&nbsp;
+#<a href=https://blog.sions.org/tags/system-administration/>System Administration</a>&nbsp;
+#<a href=https://blog.sions.org/tags/dns/>DNS</a>&nbsp;
+#<a href=https://blog.sions.org/tags/blocky/>Blocky</a>&nbsp;</span><div class=post-content><div><p>I&rsquo;ve given myself a personal goal of creating 100 ansible playbooks, I suppose roles would also count. The destination is essentially accomplishing 100 goals with ansible.</p><p>These are what I&rsquo;ve already accomplished.</p><ul><li>blocky.yml</li><li>install_disable_usb_wake.yml</li><li>install_sshd_config.yml</li><li>install_sudo.yml</li><li>lynis.yml</li><li>podman.yml</li><li>promtail.yml</li><li>run_updates.yml</li></ul><p>Overall not terribly complex roles, most of them have hardcoded defaults but that&rsquo;ll probably get resolved when the existing playbooks get converted to roles.</p><p>Most recently I made a playbook that setup and configured blocky-dns which would be my 8th playbook.</p><p>What&rsquo;s accomplished:</p><ol><li>Remove systemd-resolved</li><li>Install the DNS server</li><li>Setup a systemd unit</li><li>Start the service</li></ol><h3 id=remove-systemd-resolved>Remove systemd-resolved<a href=#remove-systemd-resolved class=hanchor arialabel=Anchor>&#8983;</a></h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Remove and purge systemd-resolved</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>ansible.builtin.apt</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#ae81ff>systemd-resolved</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>absent</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>purge</span>: <span style=color:#66d9ef>true</span>
+</span></span></code></pre></div><p>We&rsquo;re doing the fairly standard process of removing a package, using the apt module, and in this case we&rsquo;re working on <code>systemd-resolved</code>. Mainly this is being removed because it would interfere with blocky dns doing its job for a couple reasons. First and foremost that it&rsquo;s currently occupying port 53 and thus blocky wouldn&rsquo;t be able to secure the rights to use it. Another issue being that it can act as a DNS stub resolver, which isn&rsquo;t quite what we want in this instance. Overall I think it&rsquo;s great and definitely makes things a little easier in linux than they used to be but as we&rsquo;re just setting up a full dns server we won&rsquo;t need it.</p><h3 id=install-the-dns-server>Install the DNS server<a href=#install-the-dns-server class=hanchor arialabel=Anchor>&#8983;</a></h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Download binary</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.unarchive</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>src</span>: <span style=color:#e6db74>&#34;https://github.com/0xERR0R/blocky/releases/download/v0.21/blocky_v{{ blocky_version }}_Linux_x86_64.tar.gz&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/tmp</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Install binary</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>src</span>: <span style=color:#ae81ff>/tmp/blocky</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/usr/local/bin/</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0755&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create config directory - {{ service_name }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.file</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>path</span>: <span style=color:#e6db74>&#34;/etc/{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>directory</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0755&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Ensure config in place for - {{ service_name }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>src</span>: <span style=color:#ae81ff>blocky-config.yml</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#e6db74>&#34;/etc/{{ service_name }}/config.yml&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#ae81ff>Reload service</span>
+</span></span></code></pre></div><p>This is a fairly common pattern for using things released on Github, or otherwise not desirable via the respective distributions package manager. Not much different than what a user would be doing. Download, Place binary in proper place, and create config files. I&rsquo;m not convinced the parmisions are the most secure but just short of creating seperate groups for binaries based on the service user that should be able to use them, we&rsquo;ll call it good enough.</p><h3 id=setup-a-systemd-unit>Setup a systemd unit<a href=#setup-a-systemd-unit class=hanchor arialabel=Anchor>&#8983;</a></h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create service user - {{ service_name }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.user</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#e6db74>&#34;{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>system</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>present</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create service file - {{ service_name }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>content</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      [Unit]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      Description=Service file for blocky-dns
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      After=network.target
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      [Service]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      Type=simple
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      User=blocky
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      ExecStart=/usr/local/bin/blocky --config=/etc/blocky/config.yml
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      AmbientCapabilities=CAP_NET_BIND_SERVICE
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      Restart=always
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      [Install]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>      WantedBy=multi-user.target</span>      
+</span></span><span style=display:flex><span>    <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/etc/systemd/system/blocky.service</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Start service - {{ service_name }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#e6db74>&#34;{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>enabled</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>state</span>: <span style=color:#ae81ff>started</span>
+</span></span></code></pre></div><p>There&rsquo;s a lot of substitutions going on here. <code>{{ service_name }}</code> is a Jinja template. If the variable <code>service_name</code> is defined then the entire string will be replaced with whatever is set to that variable. the other interesting and different thing is <code>AmbientCapabilities=CAP_NET_BIND_SERVICE</code> being defined in the service file. This gives the service the capability to use port numbers &lt;1024. Some documentation is <a href=https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Capabilities>here</a> essentially this is a list of capabilities that are being included for the executed process as a non-privleged user.</p><p>Then we start the service.</p><h3 id=the-end-result>The end result<a href=#the-end-result class=hanchor arialabel=Anchor>&#8983;</a></h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>---
+</span></span><span style=display:flex><span>- <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Installing and configuring blocky-dns</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>hosts</span>: <span style=color:#ae81ff>all</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>vars</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>blocky_version</span>: <span style=color:#e6db74>&#34;0.21&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>service_name</span>: <span style=color:#e6db74>&#34;blocky&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>tasks</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Remove and purge systemd-resolved</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.apt</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#ae81ff>systemd-resolved</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>absent</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>purge</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Download binary</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.unarchive</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>src</span>: <span style=color:#e6db74>&#34;https://github.com/0xERR0R/blocky/releases/download/v0.21/blocky_v{{ blocky_version }}_Linux_x86_64.tar.gz&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/tmp</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Install binary</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>src</span>: <span style=color:#ae81ff>/tmp/blocky</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/usr/local/bin/</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>remote_src</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0755&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create config directory - {{ service_name }}</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.file</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>path</span>: <span style=color:#e6db74>&#34;/etc/{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>directory</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0755&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Ensure config in place for - {{ service_name }}</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>src</span>: <span style=color:#ae81ff>blocky-config.yml</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#e6db74>&#34;/etc/{{ service_name }}/config.yml&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#ae81ff>Reload service</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create service user - {{ service_name }}</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.user</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#e6db74>&#34;{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>system</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>present</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Create service file - {{ service_name }}</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.copy</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>content</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          [Unit]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          Description=Service file for blocky-dns
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          After=network.target
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          [Service]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          Type=simple
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          User=blocky
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          ExecStart=/usr/local/bin/blocky --config=/etc/blocky/config.yml
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          AmbientCapabilities=CAP_NET_BIND_SERVICE
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          Restart=always
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          [Install]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          WantedBy=multi-user.target</span>          
+</span></span><span style=display:flex><span>        <span style=color:#f92672>dest</span>: <span style=color:#ae81ff>/etc/systemd/system/blocky.service</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>mode</span>: <span style=color:#e6db74>&#34;0644&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>owner</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>group</span>: <span style=color:#ae81ff>root</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>notify</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Start service - {{ service_name }}</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#e6db74>&#34;{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>enabled</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>started</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>handlers</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Reload systemd daemon</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>daemon_reload</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Reload service</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>become</span>: <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>ansible.builtin.systemd</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>name</span>: <span style=color:#e6db74>&#34;{{ service_name }}&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>state</span>: <span style=color:#ae81ff>restarted</span>
+</span></span></code></pre></div></div></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=https://blog.sions.org/posts/ansible-handler/><span class=button__text>Ansible Handler</span>
+<span class=button__icon>→</span></a></span></div></div></article></div><footer class=footer><div class=footer__inner><div class=copyright><span>© 2023 Powered by <a href=http://gohugo.io>Hugo</a></span>
+<span>:: Theme made by <a href=https://twitter.com/panr>panr</a></span></div></div></footer><script type=text/javascript src=/bundle.min.js></script></div></body></html>
