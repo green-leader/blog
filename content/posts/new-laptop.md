@@ -7,7 +7,7 @@ readingTime = true
 hideComments = false
 +++
 
- My personal laptop died. I acquired a secondhand Dell Latitude 5285. The specs  (i5, 8GB RAM, 256GB SSD) aren't as fancy as they could be, but the price was right.
+My personal laptop died. I acquired a secondhand Dell Latitude 5285. The specs  (i5, 8GB RAM, 256GB SSD) aren't as fancy as they could be, but the price was right.
 
 I initially tried to install Windows 11 to determine if the device was entirely functional, as one does with a used device. It seems the i5 isn't a supported generation, though. So back to good ol' Windows 10. Which worked great during testing! As I'm a self-described Linux fan, I then proceeded to install and setup Linux Mint Debian Edition like I run on my old laptop and my current desktop.
 
