@@ -13,7 +13,11 @@ Following this handy guide from FunkyPenguin I was able to get most of the way, 
 
 There were a couple things that were catching me up. This might be a rehashing of the entire page, but when I had to rebuild the cluster I did get caught again and needed to do digging.
 
-Within Authentik you'll need to create an application, provider, and group. Attach the group to your testing user. 
+Within Authentik you'll need to create an application, provider, and group. Attach the group to your testing user. These are the redirect URI's you'll need to supply 
+```
+strict: http://localhost:8000
+strict: http://localhost:18000
+```
 
 This will need to be added to the end of the k3s config file for all of the control-plane masters. `/etc/rancher/k3s/config.yaml`
 
