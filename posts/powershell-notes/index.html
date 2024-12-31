@@ -18,6 +18,8 @@ Version           : 22.01.00.0
 Caption           : 7-Zip 22.01
 </code></pre><p>Then we run the following. In this case using the IdentifyingNumber is preferable as this can help unambiguously point at a specific product. But using Name is also possible.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-powershell data-lang=powershell><span style=display:flex><span>$application1 = Get-WmiObject -Class Win32_Product -Filter <span style=color:#e6db74>&#34;IdentifyingNumber = &#39;{23170F69-40C1-2701-2201-000001000000}&#39;&#34;</span>;
 </span></span><span style=display:flex><span>$application1.Uninstall()
-</span></span></code></pre></div></div></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=https://blog.sions.org/posts/promtail-plex/><span class=button__text>Promtail Plex</span>
+</span></span></code></pre></div></div></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button previous"><a href=https://blog.sions.org/posts/oidc-k3s/><span class=button__icon>←</span>
+<span class=button__text>OIDC with K3s</span></a></span>
+<span class="button next"><a href=https://blog.sions.org/posts/promtail-plex/><span class=button__text>Promtail Plex</span>
 <span class=button__icon>→</span></a></span></div></div></article></div><footer class=footer><div class=footer__inner><div class=copyright><span>© 2024 Powered by <a href=http://gohugo.io>Hugo</a></span>
 <span>:: Theme made by <a href=https://twitter.com/panr>panr</a></span></div></div></footer><script type=text/javascript src=/bundle.min.js></script></div></body></html>

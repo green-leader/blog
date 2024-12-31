@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authentik on Blog</title><link>https://blog.sions.org/tags/authentik/</link><description>Recent content in Authentik on Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 31 Dec 2024 08:00:00 +0000</lastBuildDate><atom:link href="https://blog.sions.org/tags/authentik/index.xml" rel="self" type="application/rss+xml"/><item><title>OIDC with K3s</title><link>https://blog.sions.org/posts/oidc-k3s/</link><pubDate>Tue, 31 Dec 2024 08:00:00 +0000</pubDate><guid>https://blog.sions.org/posts/oidc-k3s/</guid><description>I want to authenticate to work on my kubernetes (k3s) cluster not for any particular reason but specifically for knowledges sake. Following this I was able to get most of the way but there were a couple caveats and it doesn&amp;rsquo;t seem to be documented that many places. I&amp;rsquo;m not sure if it&amp;rsquo;s because it&amp;rsquo;s a bare metal situation and most k8 clusters are run on hyperscalers or if it&amp;rsquo;s just not something that&amp;rsquo;s usually done.</description><content>&lt;p>I want to authenticate to work on my kubernetes (k3s) cluster not for any particular reason but specifically for knowledges sake. Following this I was able to get most of the way but there were a couple caveats and it doesn&amp;rsquo;t seem to be documented that many places. I&amp;rsquo;m not sure if it&amp;rsquo;s because it&amp;rsquo;s a bare metal situation and most k8 clusters are run on hyperscalers or if it&amp;rsquo;s just not something that&amp;rsquo;s usually done.&lt;/p>
+&lt;p>Following this handy guide from FunkyPenguin I was able to get most of the way, I&amp;rsquo;ll need to do a pul request and try to get it updated. &lt;a href="https://geek-cookbook.funkypenguin.co.nz/kubernetes/oidc-authentication/k3s-authentik/">geek-cookbook.funkypenguin.co.nz/kubernetes/oidc-authentication/k3s-authentik/&lt;/a>&lt;/p>
+&lt;p>There were a couple things that were catching me up. This might be a rehashing of the entire page, but when I had to rebuild the cluster I did get caught again and needed to do digging.&lt;/p>
+&lt;p>Within Authentik you&amp;rsquo;ll need to create an application, provider, and group. Attach the group to your testing user. These are the redirect URI&amp;rsquo;s you&amp;rsquo;ll need to supply&lt;/p>
+&lt;pre tabindex="0">&lt;code>strict: http://localhost:8000
+strict: http://localhost:18000
+&lt;/code>&lt;/pre>&lt;p>This will need to be added to the end of the k3s config file for all of the control-plane masters. &lt;code>/etc/rancher/k3s/config.yaml&lt;/code>&lt;/p>
+&lt;pre tabindex="0">&lt;code>kube-apiserver-arg:
+- &amp;#34;oidc-issuer-url=&amp;lt;application URL from authentik&amp;gt;&amp;#34;
+- &amp;#34;oidc-client-id=kube-apiserver&amp;#34;
+- &amp;#34;oidc-username-claim=email&amp;#34;
+- &amp;#34;oidc-groups-claim=groups&amp;#34;
+- &amp;#34;oidc-username-prefix=oidc:&amp;#34;
+- &amp;#34;oidc-groups-prefix=oidc:&amp;#34;
+&lt;/code>&lt;/pre>&lt;p>Of note the original guide does not have the last two lines defining the prefix. After the addition has been made to the control-plane masters k3s will need to be restarted &lt;code>systemctl restart k3s&lt;/code>.&lt;/p>
+&lt;p>on the client devices &lt;a href="https://github.com/int128/kubelogin">github.com/int128/kubelogin&lt;/a> will need to be installed and placed into the path.&lt;/p>
+&lt;p>run a test using &lt;code>kubectl oidc-login setup --oidc-issuer-url=&amp;lt;application URL from authentik&amp;gt; --oidc-client-id=kube-apiserver --oidc-client-secret=&amp;lt;your secret&amp;gt; --oidc-extra-scope=profile,email&lt;/code>&lt;/p>
+&lt;p>There will be several things that return. Of primary interest is the second step. Which should return a list of groups. If groups are not returned you will need to verify the groups claim is supplied in the config file and the profile scope is requested with the token.&lt;/p>
+&lt;p>Looking to step 5 &amp;ldquo;Set up the kubeconfig&amp;rdquo; we can run that command to finish setting up the local client. This command can be run as given with no adjustments.&lt;/p>
+&lt;p>Turning back to cluster configuration we will need to create a clusterrolebinding. This will create an immutable resource binding the &lt;code>admin-kube-apiserver&lt;/code> group (authentik) to a &lt;code>cluster-admin&lt;/code> as this is the highest privilege and permission this is far from ideal so this will need to be pared down. But for instructional purposes and to get initially running it will suffice. When adjusting groups within Authentik if you need to change what user is logged in without waiting for a timeout to occur you can delete the directory &lt;code>~/.kube/cache&lt;/code>.&lt;/p>
+&lt;pre tabindex="0">&lt;code>kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+name: oidc-group-admin-kube-apiserver
+roleRef:
+apiGroup: rbac.authorization.k8s.io
+kind: ClusterRole
+name: cluster-admin
+subjects:
+- kind: Group
+name: oidc:admin-kube-apiserver
+&lt;/code>&lt;/pre>&lt;p>As I use flux I create the file and put it into the git repository and wait for it to populate. Doing a check at this point should be successful &lt;code>kubectl --user=oidc get nodes&lt;/code>. If it works you can set it as the default using &lt;code>kubectl config set-context --current --user=oidc&lt;/code>. If you would like to delete the default cluster-admin level of config and have a mandatory login you can delete the default user with &lt;code>kubectl config delete-user default&lt;/code> if you have a break-glass measure to login this should be fine.&lt;/p></content></item></channel></rss>
