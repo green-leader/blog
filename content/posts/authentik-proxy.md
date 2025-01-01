@@ -1,7 +1,7 @@
 +++
 title = "Authentik Proxy"
 publishDate = "2025-01-01T08:00:00Z"
-tags = ["", ""]
+tags = ["System Administration", "SSO", "K3s", "Kubernetes", "Authentik"]
 showFullContent = false
 readingTime = false
 hideComments = false
