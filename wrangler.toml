@@ -1,0 +1,11 @@
+name = 'blog-sions-org'
+compatibility_date = '2025-07-31'
+preview_urls = true
+
+[build]
+command = 'chmod a+x build.sh && ./build.sh'
+
+[assets]
+directory = './public'
+not_found_handling = '404-page'
+html_handling = 'auto-trailing-slash'
