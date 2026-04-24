@@ -2,6 +2,10 @@ name = 'blog-sions-org'
 compatibility_date = '2025-07-31'
 preview_urls = true
 
+[[routes]]
+pattern = "blog.sions.org"
+custom_domain = true
+
 [build]
 command = 'chmod a+x build.sh && ./build.sh'
 
