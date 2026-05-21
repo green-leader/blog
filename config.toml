@@ -8,6 +8,7 @@ pagination.pagerSize = 5
 # Required for Chroma and the custom syntax highlighting.
 [markup.highlight]
   noClasses = false
+  style = "gruvbox"
 
 [params]
   # dir name of your main content (default is `content/posts`).
