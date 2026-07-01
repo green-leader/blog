@@ -1,0 +1,7 @@
+<!-- layouts/shortcodes/js-inline.html -->
+<!-- <script{{ with .Get "type" }} type="{{ . }}"{{ end }}{{ with .Get "async" }} async{{ end }}{{ with .Get "defer" }} defer{{ end }}> -->
+<script>
+    {{ .Inner | safeHTML | safeJS }}
+</script>
+
+<!-- https://www.javaspring.net/blog/how-to-include-simple-javascript-within-hugo/#method-2-reusable-javascript-with-shortcodes -->

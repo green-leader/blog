@@ -1,0 +1,1 @@
+{{ with .Get "code" }}<pre><code>{{ end }}<div id={{ .Get "id" | default "output" }} ></div>{{ with .Get "code" }}</code></pre>{{ end }}

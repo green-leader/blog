@@ -1,0 +1,7 @@
+<form onsubmit="return false;">
+    <input type="text" id="url" placeholder="https://example.com">
+    <input type="submit" id="btnSubmit" value="Submit">
+    {{ with .Get "copy" }}
+        <button onclick="copyFunction()">Copy Text</button>
+    {{ end }}
+</form>
