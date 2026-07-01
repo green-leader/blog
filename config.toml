@@ -98,9 +98,9 @@ pagination.pagerSize = 5
 
       [languages.en.menu]
         [[languages.en.menu.main]]
-          identifier = "about"
-          name = "About"
-          url = "/about"
+          identifier = "posts"
+          name = "Posts"
+          url = "/posts"
         [[languages.en.menu.main]]
           identifier = "tools"
           name = "Tools"

@@ -1,0 +1,17 @@
+{{ define "main" }}
+  {{ with .Content }}
+    <div class="index-content">
+      {{ . }}
+    </div>
+  {{ end }}
+  <div class="tools">
+    {{ range where .Site.RegularPages "Section" "tools" }}
+      <article class="tool on-list">
+        <h2 class="post-title">
+          <a href="{{ .Permalink }}">{{ .Title | markdownify }}</a>
+        </h2>
+      </article>
+      <br>
+    {{ end }}
+  </div>
+{{ end }}
